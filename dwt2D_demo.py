@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import numpy as np
 import matplotlib.pyplot as plt
 import pywt.data
@@ -16,7 +14,7 @@ fig = plt.figure(figsize=(8,8))
 
 gs = fig.add_gridspec(nrows=2, ncols=2, hspace=0.0, wspace=0.0)
 
-gs01 = gs[0, 1].subgridspec(nrows=2, ncols=2, hspace=0.0, wspace=0.0)
+gs01 = gs[0, 0].subgridspec(nrows=2, ncols=2, hspace=0.0, wspace=0.0)
 for i, a in enumerate([LL, LH, HL, HH]):
     ax = fig.add_subplot(gs01[i])
     ax.imshow(a, interpolation="nearest", cmap=plt.cm.gray)
@@ -25,7 +23,7 @@ for i, a in enumerate([LL, LH, HL, HH]):
     
 
 for i, a in enumerate([LL, LH, HL, HH]):
-    if i == 1:
+    if i == 0:
         continue
     ax = fig.add_subplot(gs[i])
     ax.imshow(a, interpolation="nearest", cmap=plt.cm.gray)
