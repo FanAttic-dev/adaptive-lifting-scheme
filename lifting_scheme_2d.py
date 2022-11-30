@@ -80,13 +80,15 @@ def lifting_scheme_haar_dec(img):
     
     return L, H_coeffs
 
-def lifting_scheme_haar_dec2(img):
+def lifting_scheme_haar_dec2(img, level=np.inf):
     LL, (LH, HL, HH) = lifting_scheme_haar2(img)
     
     H_coeffs = [(LH, HL, HH)]
-    while len(LL) > 1:
+    lvl = 0
+    while len(LL) > 1 and lvl < level:
         LL, (LH, HL, HH) = lifting_scheme_haar2(LL)
         H_coeffs.append((LH, HL, HH))
+        lvl += 1
         
     return LL, H_coeffs
     
@@ -97,6 +99,7 @@ def lifting_scheme_haar_rec(L, H_coeffs):
         L = lifting_scheme_haar_inverse(L, H)
     return L
 
+
 dtype = np.int16
 
 img = skio.imread('cameraman.tif')
@@ -106,8 +109,8 @@ coeffs = lifting_scheme_haar2(img)
 img_rec = lifting_scheme_haar2_inverse(coeffs)
 #plt.imshow(img_rec, cmap='gray')
 
-def visualize_dec(img):
-    LL, H_coeffs = lifting_scheme_haar_dec2(img)
+def visualize_dec(img, level=None):
+    LL, H_coeffs = lifting_scheme_haar_dec2(img, level)
     
     fig = plt.figure(figsize=(8,8))
     gs = fig.add_gridspec(nrows=2, ncols=2, hspace=0.0, wspace=0.0)
@@ -118,7 +121,7 @@ def visualize_dec(img):
             ax.set_xticks([])
             ax.set_yticks([])
             
-        if i == len(H_coeffs):
+        if i == len(H_coeffs) - 1:
             ax = fig.add_subplot(gs[0])
             ax.imshow(LL, interpolation="nearest", cmap=plt.cm.gray)
             ax.set_xticks([])
@@ -129,4 +132,4 @@ def visualize_dec(img):
     fig.tight_layout()
     plt.show()
     
-visualize_dec(img)
+visualize_dec(img, 3)
