@@ -116,24 +116,21 @@ LL, H_coeffs = lifting_scheme_haar_dec2(img)
 #plt.imshow(img_rec, cmap='gray')
 
 fig = plt.figure(figsize=(8,8))
-
 gs = fig.add_gridspec(nrows=2, ncols=2, hspace=0.0, wspace=0.0)
-
-gs01 = gs[0, 0].subgridspec(nrows=2, ncols=2, hspace=0.0, wspace=0.0)
-for i, a in enumerate([LL, *H_coeffs[1]]):
-    ax = fig.add_subplot(gs01[i])
-    ax.imshow(a, interpolation="nearest", cmap=plt.cm.gray)
-    ax.set_xticks([])
-    ax.set_yticks([])
-
-for i, a in enumerate([None, *H_coeffs[0]]):
-    if a is None:
-        continue
-    
-    ax = fig.add_subplot(gs[i])
-    ax.imshow(a, interpolation="nearest", cmap=plt.cm.gray)
-    ax.set_xticks([])
-    ax.set_yticks([])
+for i, H in enumerate(H_coeffs):
+    for j in range(len(H)):
+        ax = fig.add_subplot(gs[j+1])
+        ax.imshow(H[j], interpolation="nearest", cmap=plt.cm.gray)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        
+    if i == len(H_coeffs):
+        ax = fig.add_subplot(gs[0])
+        ax.imshow(LL, interpolation="nearest", cmap=plt.cm.gray)
+        ax.set_xticks([])
+        ax.set_yticks([])
+    else:
+        gs = gs[0].subgridspec(nrows=2, ncols=2, hspace=0.0, wspace=0.0)
 
 fig.tight_layout()
 plt.show()
