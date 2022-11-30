@@ -1,9 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import pywt.data
-from numpy import fft
 from skimage import io as skio
-import math
 
 def lifting_scheme_haar(f):
     # split
@@ -51,12 +48,14 @@ def lifting_scheme_haar2_inverse(coeffs):
     new_shape = LL.shape[0] * 2, LL.shape[1]
     
     LL = LL.flatten(order='F').astype(dtype)
-    LH = LL.flatten(order='F').astype(dtype)
-    HL = LL.flatten(order='F').astype(dtype)
-    HH = LL.flatten(order='F').astype(dtype)
+    LH = LH.flatten(order='F').astype(dtype)
+    HL = HL.flatten(order='F').astype(dtype)
+    HH = HH.flatten(order='F').astype(dtype)
     
     L = lifting_scheme_haar_inverse(LL, LH)
     H = lifting_scheme_haar_inverse(HL, HH)
+    
+    #return np.reshape(L, new_shape, order='F')
     
     L = np.reshape(L, new_shape, order='F').flatten(order='C').astype(dtype)
     H = np.reshape(H, new_shape, order='F').flatten(order='C').astype(dtype)
@@ -101,36 +100,33 @@ def lifting_scheme_haar_rec(L, H_coeffs):
 dtype = np.int16
 
 img = skio.imread('cameraman.tif')
+#plt.imshow(img, cmap='gray')
+
 coeffs = lifting_scheme_haar2(img)
-
-#img_flat = img.flatten(order='F')
-#plt.imshow(np.reshape(img_flat, img.shape, order=''))
-
-#img_rec = lifting_scheme_haar2_inverse(coeffs)
+img_rec = lifting_scheme_haar2_inverse(coeffs)
 #plt.imshow(img_rec, cmap='gray')
 
-LL, H_coeffs = lifting_scheme_haar_dec2(img)
-
-#f_rec = lifting_scheme_haar_rec(L, H_coeffs)
-#img_rec = np.reshape(f_rec, img.shape)
-#plt.imshow(img_rec, cmap='gray')
-
-fig = plt.figure(figsize=(8,8))
-gs = fig.add_gridspec(nrows=2, ncols=2, hspace=0.0, wspace=0.0)
-for i, H in enumerate(H_coeffs):
-    for j in range(len(H)):
-        ax = fig.add_subplot(gs[j+1])
-        ax.imshow(H[j], interpolation="nearest", cmap=plt.cm.gray)
-        ax.set_xticks([])
-        ax.set_yticks([])
-        
-    if i == len(H_coeffs):
-        ax = fig.add_subplot(gs[0])
-        ax.imshow(LL, interpolation="nearest", cmap=plt.cm.gray)
-        ax.set_xticks([])
-        ax.set_yticks([])
-    else:
-        gs = gs[0].subgridspec(nrows=2, ncols=2, hspace=0.0, wspace=0.0)
-
-fig.tight_layout()
-plt.show()
+def visualize_dec(img):
+    LL, H_coeffs = lifting_scheme_haar_dec2(img)
+    
+    fig = plt.figure(figsize=(8,8))
+    gs = fig.add_gridspec(nrows=2, ncols=2, hspace=0.0, wspace=0.0)
+    for i, H in enumerate(H_coeffs):
+        for j in range(len(H)):
+            ax = fig.add_subplot(gs[j+1])
+            ax.imshow(H[j], interpolation="nearest", cmap=plt.cm.gray)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            
+        if i == len(H_coeffs):
+            ax = fig.add_subplot(gs[0])
+            ax.imshow(LL, interpolation="nearest", cmap=plt.cm.gray)
+            ax.set_xticks([])
+            ax.set_yticks([])
+        else:
+            gs = gs[0].subgridspec(nrows=2, ncols=2, hspace=0.0, wspace=0.0)
+    
+    fig.tight_layout()
+    plt.show()
+    
+visualize_dec(img)
