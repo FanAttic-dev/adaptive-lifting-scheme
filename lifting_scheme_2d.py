@@ -10,24 +10,16 @@ def lifting_scheme_haar(f):
     A, D = f[::2], f[1::2]
     
     # predict
-    D = D - A
+    D -= np.floor(A).astype(dtype)
     
     # update
-    A = A + (D / 2)
-    
-    # normalize
-    A = A * math.sqrt(2)
-    D = D * (math.sqrt(2) / 2)
+    A += np.floor(D / 2).astype(dtype)
     
     return A, D
 
 def lifing_scheme_haar_inverse(A, D):
-    # nomralize
-    A *= (math.sqrt(2) / 2)
-    D *= math.sqrt(2)
-    
-    A = A - (D / 2)
-    D = D + A
+    A -= np.floor(D / 2).astype(dtype)
+    D += np.floor(A).astype(dtype)
     
     res = np.zeros(len(A) + len(D))
     res[::2] = A
@@ -50,21 +42,14 @@ def lifting_scheme_haar_rec(A, D_coeffs):
         A = lifing_scheme_haar_inverse(A, D)
     return A
 
+dtype = np.int16
+
 img = skio.imread('cameraman.tif')
-#plt.imshow(img, cmap='gray')
-f = img.flatten().astype(np.float32)
+f = img.flatten().astype(dtype)
 
-A, D = lifting_scheme_haar(f)
-f_rec = lifing_scheme_haar_inverse(A, D)
-
-img_rec = np.reshape(f_rec, img.shape)
-plt.imshow(img_rec, cmap='gray')
-
-
-# full decomposition
 A, D_coeffs = lifting_scheme_haar_dec(f)
-
 f_rec = lifting_scheme_haar_rec(A, D_coeffs)
+
 img_rec = np.reshape(f_rec, img.shape)
 plt.imshow(img_rec, cmap='gray')
 
