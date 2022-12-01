@@ -80,52 +80,70 @@ def lifting_scheme_haar_dec(img):
     
     return L, H_coeffs
 
-def lifting_scheme_haar_dec2(img, max_level=np.inf):
-    LL, (LH, HL, HH) = lifting_scheme_haar2(img)
-    
-    H_coeffs = [(LH, HL, HH)]
-    level = 0
-    while len(LL) > 1 and level < max_level:
-        LL, (LH, HL, HH) = lifting_scheme_haar2(LL)
-        H_coeffs.append((LH, HL, HH))
-        level += 1
+class DWTLevel:
+    def __init__(self, img):
+        LL, (LH, HL, HH) = lifting_scheme_haar2(img)
+        self.coeffs = [LL, LH, HL, HH]
+        self.next_level_idx = None
         
-    return LL, H_coeffs
-    
+    def add_level(self, idx):
+        coeff = self.coeffs[idx]
         
-def lifting_scheme_haar_rec(L, H_coeffs):
-    while H_coeffs:
-        H = H_coeffs.pop()
-        L = lifting_scheme_haar_inverse(L, H)
-    return L
+        if len(coeff) <= 1:
+            return None
+        
+        level = DWTLevel(coeff)
+        self.coeffs[idx] = level
+        self.next_level_idx = idx
+        return level
+        
+    def get_next_level_idx(self):
+        return self.next_level_idx
+        
+    def get_max_var_coeff_idx(self):
+        return np.argmax(list(map(lambda coeff: np.var(coeff), self.coeffs)))
+        
 
-def visualize_dec(img, max_level=None):
-    LL, H_coeffs = lifting_scheme_haar_dec2(img, max_level)
+def lifting_scheme_haar_dec2(img, max_level=np.inf):
+    root = DWTLevel(img)
     
+    dwt_level = root
+    level = 0
+    while dwt_level is not None and level < max_level:
+        max_var_coeff_idx = dwt_level.get_max_var_coeff_idx()
+        dwt_level = dwt_level.add_level(max_var_coeff_idx)
+        level += 1
+    
+    return root
+
+
+def visualize_dec(root_level, max_level=None):
     fig = plt.figure(figsize=(8,8))
     gs = fig.add_gridspec(nrows=2, ncols=2, hspace=0.0, wspace=0.0)
     
-    for level, H in enumerate(H_coeffs):
-        for i in range(len(H)):
-            ax = fig.add_subplot(gs[i+1])
-            ax.imshow(H[i], interpolation="nearest", cmap=plt.cm.gray)
+    level = root_level
+    while True:
+        next_level_idx = level.get_next_level_idx()
+        
+        for i in range(len(level.coeffs)):
+            if i == next_level_idx:
+                continue
+            ax = fig.add_subplot(gs[i])
+            ax.imshow(level.coeffs[i], interpolation="nearest", cmap=plt.cm.gray)
             ax.set_xticks([])
             ax.set_yticks([])
-            
-        if level < max_level:
-            gs = gs[0].subgridspec(nrows=2, ncols=2, hspace=0.0, wspace=0.0)
-
-           
-    ax = fig.add_subplot(gs[0])
-    ax.imshow(LL, interpolation="nearest", cmap=plt.cm.gray)
-    ax.set_xticks([])
-    ax.set_yticks([])
-    
+        
+        if next_level_idx is None:
+            break
+        else:
+            level = level.coeffs[next_level_idx]
+            gs = gs[next_level_idx].subgridspec(nrows=2, ncols=2, hspace=0.0, wspace=0.0)
+        
     fig.tight_layout()
     plt.show()
 
 
 dtype = np.int16
-
 img = skio.imread('cameraman.tif')    
-visualize_dec(img, 3)
+root_level = lifting_scheme_haar_dec2(img, max_level=3)
+visualize_dec(root_level)
