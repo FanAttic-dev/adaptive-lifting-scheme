@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from skimage import io as skio
 
+
 class DWTLevel:
     def __init__(self, img):
         LL, (LH, HL, HH) = lifting_scheme_haar2(img)
@@ -106,6 +107,8 @@ def lifting_scheme_haar2_inverse(coeffs):
         
 
 def lifting_scheme_haar2_dec(img, max_level=np.inf):
+    """ Performs DWT decomposition based on variance using lifting scheme of `img` up to level `max_level`. """
+    
     root = DWTLevel(img)
     
     dwt_level = root
@@ -119,16 +122,20 @@ def lifting_scheme_haar2_dec(img, max_level=np.inf):
 
 
 def lifting_scheme_haar2_rec(level):
+    """ Performs DWT reconstruction recursively of a given root level `level`. """
+    
+    # top down
     next_level = level.get_next_level()
     if next_level is None:
         return lifting_scheme_haar2_inverse(level.coeffs)
     
+    # bottom up
     dwt_level_rec = lifting_scheme_haar2_rec(next_level)
     coeffs = [dwt_level_rec if isinstance(coeff, DWTLevel) else coeff for coeff in level.coeffs]
     return lifting_scheme_haar2_inverse(coeffs)
 
 
-def visualize_dec(root_level, max_level=None):
+def visualize_dec(root_level):
     fig = plt.figure(figsize=(8,8))
     gs = fig.add_gridspec(nrows=2, ncols=2, hspace=0.0, wspace=0.0)
     
