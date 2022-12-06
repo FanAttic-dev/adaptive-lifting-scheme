@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from skimage import io as skio
+from skimage.color import rgb2gray
 
 def lifting_scheme_haar(f):
     # split
@@ -99,7 +100,7 @@ def lifting_scheme_haar_rec(L, H_coeffs):
         L = lifting_scheme_haar_inverse(L, H)
     return L
 
-def visualize_dec(img, max_level=None):
+def visualize_dec(img, max_level=np.inf):
     LL, H_coeffs = lifting_scheme_haar_dec2(img, max_level)
     
     fig = plt.figure(figsize=(8,8))
@@ -127,5 +128,6 @@ def visualize_dec(img, max_level=None):
 
 dtype = np.int16
 
-img = skio.imread('../images/lena_gray_512.tif')    
-visualize_dec(img, 3)
+
+img = skio.imread('../images/lena_gray_512.tif')
+visualize_dec(img)

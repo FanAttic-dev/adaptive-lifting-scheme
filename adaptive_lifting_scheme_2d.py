@@ -1,12 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from skimage import io as skio
+from skimage.color import rgb2gray
+import os
 
+dtype = np.int16
 
 class DWTLevel:
     def __init__(self, img):
         LL, (LH, HL, HH) = lifting_scheme_haar2(img)
         self.coeffs = [LL, LH, HL, HH]
+        self.next_level_idx = None
         
     def add_level(self, idx):
         """ Creates a new dwt level at position `idx` and stores it in `self.coeffs`. """
@@ -17,14 +21,16 @@ class DWTLevel:
         
         level = DWTLevel(coeff)
         self.coeffs[idx] = level
+        self.next_level_idx = idx
         
         return level
     
     def get_next_level(self):
         """ Returns the next dwt level if exists. If the current dwt level is a leaf, returns None """
-        next_level_list = [coeff for coeff in self.coeffs if isinstance(coeff, DWTLevel)]
+        next_level_list = [(coeff, idx) for idx, coeff in enumerate(self.coeffs) if isinstance(coeff, DWTLevel)]
         if len(next_level_list) == 0:
-            return None
+            return None, -1
+        assert len(next_level_list) == 1
         return next_level_list[0]
         
     def get_max_var_coeff_idx(self):
@@ -107,10 +113,7 @@ def lifting_scheme_haar2_inverse(coeffs):
         
 
 def lifting_scheme_haar2_dec(img, max_level=np.inf):
-    """ Performs DWT decomposition based on variance using lifting scheme of `img` up to level `max_level`. """
-    
-    # TODO: perform padding
-    
+    """ Performs DWT decomposition based on variance using lifting scheme of `img` up to level `max_level`. """    
     root = DWTLevel(img)
     
     dwt_level = root
@@ -127,7 +130,7 @@ def lifting_scheme_haar2_rec(level):
     """ Performs DWT reconstruction recursively of a given root level `level`. """
     
     # top down
-    next_level = level.get_next_level()
+    next_level, _ = level.get_next_level()
     if next_level is None:
         return lifting_scheme_haar2_inverse(level.coeffs)
     
@@ -137,36 +140,80 @@ def lifting_scheme_haar2_rec(level):
     return lifting_scheme_haar2_inverse(coeffs)
 
 
-def visualize_dec(root_level):
-    fig = plt.figure(figsize=(8,8))
-    gs = fig.add_gridspec(nrows=2, ncols=2, hspace=0.0, wspace=0.0)
+def visualize_dec(img, root_level):
+    def imshow(ax, img):
+        ax.imshow(img, interpolation="nearest", cmap=plt.cm.gray)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        
+    
+    fig = plt.figure(figsize=(16,8), num=img_name)
+    gs = fig.add_gridspec(nrows=1, ncols=2)
+    
+    ax = fig.add_subplot(gs[0])
+    ax.set_title('Reconstructed')
+    imshow(ax, img)
+    
+    ax = fig.add_subplot(gs[1])
+    ax.set_title('Decomposed')
+    ax.set_xticks([])
+    ax.set_yticks([])
+    gs = gs[1].subgridspec(nrows=2, ncols=2, hspace=0.0, wspace=0.0)
     
     level = root_level
     while True:
-        next_level = None
         for i, coeff in enumerate(level.coeffs):
             if isinstance(coeff, DWTLevel):
-                next_level = coeff
                 continue
             
             ax = fig.add_subplot(gs[i])
-            ax.imshow(coeff, interpolation="nearest", cmap=plt.cm.gray)
-            ax.set_xticks([])
-            ax.set_yticks([])
+            imshow(ax, coeff)
         
+        next_level, next_level_idx = level.get_next_level()
         if next_level is None:
             break
         else:
-            gs = gs[level.coeffs.index(next_level)].subgridspec(nrows=2, ncols=2, hspace=0.0, wspace=0.0)
+            gs = gs[next_level_idx].subgridspec(nrows=2, ncols=2, hspace=0.0, wspace=0.0)
             level = next_level
         
     fig.tight_layout()
     plt.show()
 
 
-dtype = np.int16
-img = skio.imread('images/cameraman.tif')
-root_level = lifting_scheme_haar2_dec(img, max_level=3)
+def load_image(path):
+    img = skio.imread(path)
+    
+    # if the image is not grayscale, convert it to grayscale or just take the first channel
+    if len(img.shape) == 3 and img.shape[2] > 1:
+        try:
+            img = rgb2gray(img)
+        except:
+            img = img[:, :, 0]
+        
+    return img
+
+
+def img_noise():
+    img = np.zeros((512, 512))
+    img = img + np.round(np.random.normal(128, 100, (512, 512))).astype(np.uint8)
+    return img
+    
+
+images = [
+    'additive_noise.png',
+    'cameraman.tif', 
+    'lake.tif', 
+    'lena.tif', 
+    'livingroom.tif',
+]
+img_name = images[0]
+img = load_image(f'images/{img_name}')
+
+# Decomposition
+root_level = lifting_scheme_haar2_dec(img, max_level=np.inf)
+
+# Reconstruction
 img_rec = lifting_scheme_haar2_rec(root_level)
-#plt.imshow(img_rec, cmap='gray')
-visualize_dec(root_level)
+
+# Visualization
+visualize_dec(img_rec, root_level)
