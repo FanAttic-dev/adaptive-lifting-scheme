@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from skimage import io as skio
 from skimage.color import rgb2gray
-import os
 
 dtype = np.int16
 
@@ -151,13 +150,8 @@ def visualize_dec(img, root_level):
     gs = fig.add_gridspec(nrows=1, ncols=2)
     
     ax = fig.add_subplot(gs[0])
-    ax.set_title('Reconstructed')
     imshow(ax, img)
     
-    ax = fig.add_subplot(gs[1])
-    ax.set_title('Decomposed')
-    ax.set_xticks([])
-    ax.set_yticks([])
     gs = gs[1].subgridspec(nrows=2, ncols=2, hspace=0.0, wspace=0.0)
     
     level = root_level
@@ -215,5 +209,5 @@ root_level = lifting_scheme_haar2_dec(img, max_level=np.inf)
 # Reconstruction
 img_rec = lifting_scheme_haar2_rec(root_level)
 
-# Visualization
+# Visualization of the reconstructed image (left) and the decomposition (right)
 visualize_dec(img_rec, root_level)
