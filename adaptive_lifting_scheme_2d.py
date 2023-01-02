@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+"""
+PA171 - Image Transforms, Autumn 2022
+Project - Adaptive Lifting Scheme
+
+@author: Attila Zsíros
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from skimage import io as skio
@@ -194,6 +202,7 @@ def img_noise():
     
 
 images = [
+    'stars.jpg',
     'additive_noise.png',
     'cameraman.tif', 
     'lake.tif', 
